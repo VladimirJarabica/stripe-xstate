@@ -1,4 +1,4 @@
-import { createMachine, Machine, assign } from "xstate";
+import { Machine, assign } from "xstate";
 import { Stripe, StripeElements } from "@stripe/stripe-js";
 import { Subscription } from "./types";
 import {
@@ -15,6 +15,7 @@ export interface Context {
   customerId?: string;
   subscription?: Subscription;
   loadingText?: string;
+  error?: string | null;
 }
 
 type Event =
@@ -38,6 +39,13 @@ interface Schema {
   };
 }
 
+const onErrorHandler = {
+  target: "error",
+  actions: assign<Context, { type: any; data: string }>({
+    error: (_, event) => event.data,
+  }),
+};
+
 const paymentMachine = Machine<Context, Schema, Event>(
   {
     id: "paymentMachine",
@@ -48,7 +56,12 @@ const paymentMachine = Machine<Context, Schema, Event>(
         on: { START: { target: "obtainCustomerId", actions: "initialize" } },
       },
       error: {
-        on: { RESET: "idle" },
+        on: {
+          RESET: {
+            target: "idle",
+            actions: assign<Context>({ error: () => null }),
+          },
+        },
       },
       obtainCustomerId: {
         invoke: {
@@ -57,7 +70,7 @@ const paymentMachine = Machine<Context, Schema, Event>(
             target: "createPaymentMethod",
             actions: assign({ customerId: (_, event) => event.data }),
           },
-          onError: "error",
+          onError: onErrorHandler,
         },
       },
       createPaymentMethod: {
@@ -67,7 +80,7 @@ const paymentMachine = Machine<Context, Schema, Event>(
             target: "createSubscription",
             actions: assign({ paymentMethodId: (_, event) => event.data }),
           },
-          onError: "error",
+          onError: onErrorHandler,
         },
       },
       createSubscription: {
@@ -77,7 +90,7 @@ const paymentMachine = Machine<Context, Schema, Event>(
             target: "checkSubscriptionStatus",
             actions: assign({ subscription: (_, event) => event.data }),
           },
-          onError: "error",
+          onError: onErrorHandler,
         },
       },
       checkSubscriptionStatus: {
@@ -97,7 +110,7 @@ const paymentMachine = Machine<Context, Schema, Event>(
         invoke: {
           src: confirmCardPaymentService,
           onDone: "paymentSuccess",
-          onError: "error",
+          onError: onErrorHandler,
         },
       },
       paymentSuccess: {

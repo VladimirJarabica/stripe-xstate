@@ -62,6 +62,8 @@ function App() {
         Pay
       </button>
       {state.matches("error") && <button onClick={handleReset}>Reset</button>}
+      <br />
+      {state.context.error && <small>{state.context.error}</small>}
     </div>
   );
 }

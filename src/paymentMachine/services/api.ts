@@ -2,13 +2,13 @@ import { Subscription } from "../types";
 
 type MockResponses = {
   "/customer-id": string;
-  "/attach-payment-pethod": null;
+  "/attach-payment-method": null;
   "/subscription": Subscription;
 };
 
 const MOCK_RESPONSES: MockResponses = {
   "/customer-id": "123Customer",
-  "/attach-payment-pethod": null,
+  "/attach-payment-method": null,
   "/subscription": {
     latest_invoice: {
       payment_intent: {
@@ -25,7 +25,7 @@ export const callApi = <T extends keyof MockResponses>(
   body?: any
 ): Promise<MockResponses[T]> =>
   new Promise((resolve, reject) => {
-    if (MOCK_RESPONSES[url]) {
+    if (typeof MOCK_RESPONSES[url] !== "undefined") {
       setTimeout(() => {
         resolve(MOCK_RESPONSES[url]);
       }, 1000);
