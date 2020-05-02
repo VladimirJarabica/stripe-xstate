@@ -40,13 +40,8 @@ function App() {
   const [state, send] = useMachine(paymentMachine);
 
   const handleSubmit = () => {
-    console.log("paying");
-
-    if (!stripe || !elements) {
-      // Stripe.js has not yet loaded.
-      return;
-    }
-
+    // Stripe.js has not yet loaded.
+    if (!stripe || !elements) return;
     send({ type: "START", stripe, elements });
   };
 
